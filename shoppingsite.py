@@ -5,16 +5,18 @@ put melons in a shopping cart.
 
 Authors: Joel Burton, Christian Fernandez, Meggie Mahnken, Katie Byers.
 """
+# added import session because you need it for flash's version of cookies on steroids: sessions
 
-from flask import Flask, render_template, redirect, flash
+from flask import Flask, render_template, redirect, flash, session
 import jinja2
 
 import melons
 
 app = Flask(__name__)
 
+# made up a secret key because this is needed for flask sessions
 # A secret key is needed to use Flask sessioning features
-app.secret_key = 'this-should-be-something-unguessable'
+app.secret_key = 'coolstorybruh'
 
 # Normally, if you refer to an undefined variable in a Jinja template,
 # Jinja silently ignores this. This makes debugging difficult, so we'll
@@ -43,6 +45,15 @@ def list_melons():
                            melon_list=melon_list)
 
 
+# the page will show in the browser as /melon/<melon_id>,
+# but the page uses melon_details.html as the template!
+# instead of using melon class, we are now going to use
+# display_melon as the class!
+# So on melon_details, we can use class attributes of melon_details!
+# We can use <melon_id> in a URL if it's an obj containing a string
+# If its an object containing an integer, use /post/<int:integer_object>
+# If its a subpath (string including slashes), use /path/<path/subsubpath>
+
 @app.route("/melon/<melon_id>")
 def show_melon(melon_id):
     """Return page showing the details of a given melon.
@@ -50,7 +61,9 @@ def show_melon(melon_id):
     Show all info about a melon. Also, provide a button to buy that melon.
     """
 
-    melon = melons.get_by_id("meli")
+    # edited get_by_id to melon_id from melon class imported from melons.py
+    # melon_id object does not need a quote, as it is an object and not a string
+    melon = melons.get_by_id(melon_id)
     print(melon)
     return render_template("melon_details.html",
                            display_melon=melon)
@@ -89,6 +102,7 @@ def add_to_cart(melon_id):
     page and display a confirmation message: 'Melon successfully added to
     cart'."""
 
+    # ********** THIS WAS GIVEN
     # TODO: Finish shopping cart functionality
 
     # The logic here should be something like:
@@ -99,8 +113,41 @@ def add_to_cart(melon_id):
     # - increment the count for that melon id by 1
     # - flash a success message
     # - redirect the user to the cart page
+    # ********* END OF GIVEN
 
-    return "Oops! This needs to be implemented!"
+    # cart is whatever "cart" is in sessions
+    # if it doesn't exist, it will default to {}
+    # to use a variable stored in sessions in a view,
+    # use sessions.get("variable")
+    types_of_melons_in_cart = []
+    cart_total_cost = 0
+
+    cart = sessions.get("cart", {})
+
+    # iterate through the cart dictionary items
+    for melon_id, quantity in cart.items():
+        # use melon id to identify the name of melon in cart
+        type_of_melon_added = melons.get_by_id(melon_id)
+
+        # WHAT OTHER THINGS DO WE WANT TO KNOW?
+        # A: QUANTITY
+        type_of_melon_added.quantity = quantity
+        # A: TOTAL COST FOR THAT MELON TYPE
+        type_of_melon_added_total_cost = type_of_melon_in_cart.price * type_of_melon_in_cart.quantity   
+        # A: TOTAL COST FOR THE ENTIRE CART
+        cart_total_cost += type_of_melon_total_cost
+
+        # add my new melons to the cart   
+        types_of_melons_in_cart.append(type_of_melon_added)
+
+        #repeat loop for each melon in cart.items created by sessions.get("cart")
+
+
+    return render_template(cart.html,
+                           #cart is a list that will be iterated through to post on cart.html 
+                           cart = types_of_melons_in_cart,
+                           #order_total is the variable name used in cart.html for cart_total_cost
+                           order_total = cart_total_cost)
 
 
 @app.route("/login", methods=["GET"])
