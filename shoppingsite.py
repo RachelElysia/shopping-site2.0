@@ -98,6 +98,7 @@ def show_shopping_cart():
     # to use a variable stored in sessions in a view,
     # use sessions.get("variable")
     types_of_melons_in_cart = []
+    type_of_melon_added_total_cost = 0
     cart_total_cost = 0
 
     #must use .setdefault to set a default of an empty dictionary!!!
