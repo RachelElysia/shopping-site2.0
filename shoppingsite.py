@@ -73,6 +73,7 @@ def show_melon(melon_id):
 def show_shopping_cart():
     """Display content of shopping cart."""
 
+    # ******** GIVEN
     # TODO: Display the contents of the shopping cart.
 
     # The logic here will be something like:
@@ -90,8 +91,44 @@ def show_shopping_cart():
     #
     # Make sure your function can also handle the case wherein no cart has
     # been added to the session
+    # END GIVEN
 
-    return render_template("cart.html")
+    # cart is whatever "cart" is in sessions
+    # if it doesn't exist, it will default to {}
+    # to use a variable stored in sessions in a view,
+    # use sessions.get("variable")
+    types_of_melons_in_cart = []
+    cart_total_cost = 0
+
+    #must use .setdefault to set a default of an empty dictionary!!!
+    users_cart = session.setdefault("cart", {})
+
+    # iterate through the cart dictionary items
+    for melon_id, quantity in users_cart.items():
+        # use melon id to identify the name of melon in cart
+        type_of_melon_added = melons.get_by_id(melon_id)
+
+        # WHAT OTHER THINGS DO WE WANT TO KNOW?
+        # A: QUANTITY
+        type_of_melon_added.quantity = quantity
+        # A: TOTAL COST FOR THAT MELON TYPE
+        type_of_melon_added_total_cost = type_of_melon_added.price * type_of_melon_added.quantity   
+        # A: TOTAL COST FOR THE ENTIRE CART
+        cart_total_cost += type_of_melon_added_total_cost
+
+        # add my new melons to the cart   
+        types_of_melons_in_cart.append(type_of_melon_added)
+
+        #repeat loop for each melon in users_cart.items created by sessions.get("cart")
+
+
+    return render_template("cart.html",
+                           #users_cart is a list that will be iterated through to post on cart.html 
+                           users_cart = types_of_melons_in_cart,
+                           #order_total is the variable name used in cart.html for cart_total_cost
+                           order_total = cart_total_cost,
+                           melon_total_cost = type_of_melon_added_total_cost)
+
 
 
 @app.route("/add_to_cart/<melon_id>")
@@ -115,39 +152,31 @@ def add_to_cart(melon_id):
     # - redirect the user to the cart page
     # ********* END OF GIVEN
 
-    # cart is whatever "cart" is in sessions
-    # if it doesn't exist, it will default to {}
-    # to use a variable stored in sessions in a view,
-    # use sessions.get("variable")
-    types_of_melons_in_cart = []
-    cart_total_cost = 0
+    #similar to check cart, get the cart and create one if empty
+    users_cart = session.get("cart", {})
 
-    cart = sessions.get("cart", {})
+    # adds 1 to the melon id
+    # even if the melon id doesn't exist...
+    # a dictionary would update it
+    if melon_id not in users_cart.keys():
+        users_cart[melon_id] = 1
+        # I used flash messages to debug.
+        # flash(f'I\'m glad you like the {melon_id} so much!') 
+    else:
+        users_cart[melon_id] = users_cart.get(melon_id) + 1
+        # I used flash messages to debug.
+        # flash(f'This is a great melon, I promise!') 
 
-    # iterate through the cart dictionary items
-    for melon_id, quantity in cart.items():
-        # use melon id to identify the name of melon in cart
-        type_of_melon_added = melons.get_by_id(melon_id)
+    flashmelon = melons.get_by_id(melon_id)
 
-        # WHAT OTHER THINGS DO WE WANT TO KNOW?
-        # A: QUANTITY
-        type_of_melon_added.quantity = quantity
-        # A: TOTAL COST FOR THAT MELON TYPE
-        type_of_melon_added_total_cost = type_of_melon_in_cart.price * type_of_melon_in_cart.quantity   
-        # A: TOTAL COST FOR THE ENTIRE CART
-        cart_total_cost += type_of_melon_total_cost
+    # flash message now.
+    flash(f'You successfully added the { flashmelon.common_name } to your cart!')    
 
-        # add my new melons to the cart   
-        types_of_melons_in_cart.append(type_of_melon_added)
+    # redirects need quotes and /, no .html!
+    return redirect("/cart")
 
-        #repeat loop for each melon in cart.items created by sessions.get("cart")
+    
 
-
-    return render_template(cart.html,
-                           #cart is a list that will be iterated through to post on cart.html 
-                           cart = types_of_melons_in_cart,
-                           #order_total is the variable name used in cart.html for cart_total_cost
-                           order_total = cart_total_cost)
 
 
 @app.route("/login", methods=["GET"])
